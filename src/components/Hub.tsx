@@ -4,9 +4,31 @@ import "./Hub.css";
 
 const SECURE = typeof window !== "undefined" && window.isSecureContext;
 
+function spotlight(e: React.MouseEvent<HTMLElement>) {
+  const el = e.currentTarget;
+  const r = el.getBoundingClientRect();
+  el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+  el.style.setProperty("--my", `${e.clientY - r.top}px`);
+}
+
 export default function Hub() {
   return (
     <div className="hub">
+      <nav className="hub__nav">
+        <span className="hub__logo">
+          <span className="hub__logo-mark" aria-hidden />
+          Reality Sandbox
+        </span>
+        <a
+          className="hub__nav-link"
+          href="https://github.com/nroze22/Mesh"
+          target="_blank"
+          rel="noreferrer"
+        >
+          GitHub ↗
+        </a>
+      </nav>
+
       <header className="hub__hero">
         <span className="hub__badge">
           <span className="hub__badge-dot" />
@@ -37,18 +59,21 @@ export default function Hub() {
       </header>
 
       <main className="hub__grid">
-        {DEMOS.map((demo) => (
+        {DEMOS.map((demo, i) => (
           <Link
             key={demo.id}
             to={`/demo/${demo.id}`}
             className="card"
+            onMouseMove={spotlight}
             style={
               {
                 "--c1": demo.accent[0],
                 "--c2": demo.accent[1],
+                animationDelay: `${i * 70}ms`,
               } as React.CSSProperties
             }
           >
+            <span className="card__spot" aria-hidden />
             <div className="card__art" aria-hidden>
               <span className="card__glyph">{demo.glyph}</span>
             </div>

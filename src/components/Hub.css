@@ -1,7 +1,51 @@
 .hub {
   max-width: 1100px;
   margin: 0 auto;
-  padding: clamp(1.5rem, 4vw, 3rem) clamp(1.1rem, 4vw, 2rem) 3rem;
+  padding: 0 clamp(1.1rem, 4vw, 2rem) 3rem;
+}
+
+.hub__nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.hub__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 700;
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+}
+
+.hub__logo-mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 0 16px rgba(91, 140, 255, 0.6);
+}
+
+.hub__nav-link {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.hub__nav-link:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
 }
 
 .hub__hero {
@@ -88,12 +132,43 @@
     border-color 0.18s ease,
     box-shadow 0.18s ease;
   isolation: isolate;
+  animation: card-in 0.5s ease-out both;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .card:hover {
   transform: translateY(-4px);
   border-color: var(--border-strong);
   box-shadow: var(--shadow);
+}
+
+/* Pointer-tracking spotlight glow. */
+.card__spot {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  background: radial-gradient(
+    220px circle at var(--mx, 50%) var(--my, 0%),
+    color-mix(in srgb, var(--c1) 28%, transparent),
+    transparent 60%
+  );
+}
+
+.card:hover .card__spot {
+  opacity: 1;
 }
 
 .card__art {

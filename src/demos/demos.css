@@ -10,7 +10,7 @@
 .demo-status {
   position: absolute;
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 1.1rem);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 6.2rem);
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;

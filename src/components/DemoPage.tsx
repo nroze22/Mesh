@@ -1,7 +1,9 @@
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getDemo } from "../demos/registry";
 import { useCamera } from "../core/useCamera";
+import { useFps } from "../core/useFps";
+import { captureStage, shareOrDownload } from "../core/capture";
 import NotFound from "./NotFound";
 import "./DemoPage.css";
 
@@ -12,7 +14,11 @@ export default function DemoPage() {
   const camera = useCamera(demo?.facing ?? "environment");
   const { videoRef, status, error, start, stop, flip, facingMode } = camera;
 
+  const stageRef = useRef<HTMLDivElement>(null);
   const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
+  const [flash, setFlash] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const fps = useFps(status === "ready");
 
   // Release the camera whenever we leave this demo.
   useEffect(() => () => stop(), [stop]);
@@ -33,6 +39,25 @@ export default function DemoPage() {
 
   const mirrored = facingMode === "user";
 
+  const onCapture = useCallback(async () => {
+    const stage = stageRef.current;
+    const video = videoRef.current;
+    if (!stage || !video || capturing) return;
+    setCapturing(true);
+    setFlash(true);
+    window.setTimeout(() => setFlash(false), 320);
+    try {
+      const blob = await captureStage(stage, video, mirrored);
+      if (blob) {
+        await shareOrDownload(blob, `reality-sandbox-${demo?.id ?? "shot"}-${Date.now()}.png`);
+      }
+    } catch (err) {
+      console.error("Capture failed", err);
+    } finally {
+      setCapturing(false);
+    }
+  }, [capturing, mirrored, demo, videoRef]);
+
   const ready = status === "ready" && dims !== null;
   const demoNode = useMemo(() => {
     if (!demo || !ready || !videoRef.current || !dims) return null;
@@ -50,7 +75,7 @@ export default function DemoPage() {
   if (!demo) return <NotFound />;
 
   return (
-    <div className="stage">
+    <div className="stage" ref={stageRef}>
       <video
         ref={videoRef}
         className="stage__video"
@@ -62,7 +87,7 @@ export default function DemoPage() {
       {/* Active demo overlay (lazy-loaded). */}
       {ready && (
         <Suspense fallback={<Overlay title="Loading demo…" spinner />}>
-          <div className="stage__overlay">{demoNode}</div>
+          <div className="stage__overlay stage__overlay--in">{demoNode}</div>
         </Suspense>
       )}
 
@@ -78,6 +103,9 @@ export default function DemoPage() {
         <div className="stage__heading">
           <span className="stage__glyph">{demo.glyph}</span>
           <span className="stage__name">{demo.title}</span>
+          {status === "ready" && fps > 0 && (
+            <span className="stage__fps">{fps} fps</span>
+          )}
         </div>
         {status === "ready" && (
           <button className="iconbtn" onClick={flip} aria-label="Flip camera">
@@ -85,6 +113,24 @@ export default function DemoPage() {
           </button>
         )}
       </div>
+
+      {/* HUD frame + shutter */}
+      {status === "ready" && (
+        <>
+          <div className="stage__frame" aria-hidden />
+          <button
+            className={"shutter" + (capturing ? " shutter--busy" : "")}
+            onClick={() => void onCapture()}
+            disabled={capturing}
+            aria-label="Capture photo"
+          >
+            <span className="shutter__ring" />
+            <span className="shutter__dot" />
+          </button>
+        </>
+      )}
+
+      {flash && <div className="stage__flash" aria-hidden />}
 
       {/* Permission / loading / error gates */}
       {status === "idle" && (

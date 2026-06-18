@@ -1,0 +1,19 @@
+{
+  "name": "Reality Sandbox",
+  "short_name": "Sandbox",
+  "description": "A browser-native AR and computer-vision playground. Point your camera and watch the web see the world.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#06070d",
+  "theme_color": "#06070d",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
