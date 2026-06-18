@@ -2,7 +2,9 @@ name: Deploy Reality Sandbox
 
 on:
   push:
-    branches: ["main"]
+    # Deploy from main, and from the current default branch (the github-pages
+    # environment only permits deployments from the repo's default branch).
+    branches: ["main", "claude/reality-sandbox-github-pages-r9ecf0"]
   # Allow manual runs from the Actions tab.
   workflow_dispatch:
 
