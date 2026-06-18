@@ -1,0 +1,131 @@
+.stage {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  overflow: hidden;
+}
+
+.stage__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+.stage__overlay,
+.stage__overlay > * {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.stage__topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: calc(env(safe-area-inset-top, 0px) + 0.8rem) 0.9rem 0.8rem;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.6), transparent);
+}
+
+.stage__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.98rem;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+
+.stage__glyph {
+  font-size: 1.1rem;
+}
+
+.iconbtn {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.25rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
+}
+
+.iconbtn:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 1.2rem;
+  background: rgba(4, 5, 12, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+.overlay__panel {
+  width: min(440px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  text-align: center;
+  padding: 1.8rem 1.6rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow);
+}
+
+.overlay__title {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+}
+
+.overlay__body {
+  margin: 0;
+  color: var(--text-dim);
+  line-height: 1.55;
+  font-size: 0.96rem;
+}
+
+.overlay__uses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+}
+
+.overlay__fine {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+  max-width: 36ch;
+}
+
+.overlay__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+}

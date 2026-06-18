@@ -1,0 +1,205 @@
+.hub {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1.1rem, 4vw, 2rem) 3rem;
+}
+
+.hub__hero {
+  padding: clamp(1rem, 5vw, 3rem) 0 clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.hub__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.hub__badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-3);
+  box-shadow: 0 0 12px var(--accent-3);
+}
+
+.hub__title {
+  font-size: clamp(2.6rem, 9vw, 4.6rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  margin: 1.2rem 0 0.8rem;
+  font-weight: 800;
+}
+
+.hub__title-accent {
+  background: linear-gradient(120deg, var(--accent), var(--accent-2) 60%, var(--accent-3));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hub__lede {
+  max-width: 60ch;
+  font-size: clamp(1rem, 2.4vw, 1.18rem);
+  line-height: 1.6;
+  color: var(--text-dim);
+  margin: 0 0 1.4rem;
+}
+
+.hub__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.hub__warn {
+  margin-top: 1.4rem;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 179, 91, 0.35);
+  background: rgba(255, 179, 91, 0.08);
+  color: #ffcf9a;
+  font-size: 0.9rem;
+  max-width: 60ch;
+}
+
+.hub__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 1.1rem;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+  isolation: isolate;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow);
+}
+
+.card__art {
+  height: 132px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, var(--c1) 55%, transparent), transparent 60%),
+    radial-gradient(120% 120% at 100% 100%, color-mix(in srgb, var(--c2) 55%, transparent), transparent 60%),
+    var(--bg-soft);
+  position: relative;
+}
+
+.card__art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: radial-gradient(circle at 50% 50%, #000 30%, transparent 75%);
+}
+
+.card__glyph {
+  font-size: 3rem;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.5));
+  z-index: 1;
+}
+
+.card__body {
+  padding: 1.1rem 1.2rem 0.5rem;
+  flex: 1;
+}
+
+.card__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  justify-content: space-between;
+}
+
+.card__title {
+  font-size: 1.25rem;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.card__exp {
+  color: #ffcf9a;
+  border-color: rgba(255, 179, 91, 0.4);
+  background: rgba(255, 179, 91, 0.08);
+  flex-shrink: 0;
+}
+
+.card__tagline {
+  color: var(--text-dim);
+  font-size: 0.94rem;
+  line-height: 1.5;
+  margin: 0.5rem 0 0.9rem;
+}
+
+.card__uses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.card__use {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-faint);
+  padding: 0.18rem 0.5rem;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+}
+
+.card__cta {
+  padding: 0.9rem 1.2rem 1.1rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text);
+  background: linear-gradient(90deg, var(--c1), var(--c2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hub__footer {
+  margin-top: 2.5rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-faint);
+  font-size: 0.85rem;
+}
+
+.hub__source {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.hub__source:hover {
+  color: var(--text);
+}
