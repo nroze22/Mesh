@@ -33,12 +33,12 @@ export const DEMOS: DemoMeta[] = [
   {
     id: "object-overlay",
     title: "Object Overlay",
-    tagline: "Real-time object detection with labelled bounding boxes",
+    tagline: "Real-time YOLOv8 detection across 80 object classes",
     description:
-      "An EfficientDet model spots everyday objects in frame and overlays animated, labelled boxes with live confidence readouts.",
+      "A YOLOv8 neural network runs locally via ONNX Runtime Web (WebGPU-accelerated) to spot everyday objects — people, phones, cups, chairs and dozens more — and overlays animated, labelled boxes with live confidence readouts.",
     glyph: "🎯",
     maturity: "stable",
-    uses: ["MediaPipe", "EfficientDet", "Canvas"],
+    uses: ["YOLOv8", "ONNX Runtime", "WebGPU"],
     facing: "environment",
     accent: ["#ffb35b", "#ff6b6b"],
     component: lazy(() => import("./ObjectOverlay")),

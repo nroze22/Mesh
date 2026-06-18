@@ -1,77 +1,75 @@
 import { useEffect, useRef, useState } from "react";
-import type { ObjectDetector, ObjectDetectorResult } from "@mediapipe/tasks-vision";
+import type { InferenceSession } from "onnxruntime-web/webgpu";
 import type { DemoProps } from "./types";
 import { useAnimationFrame } from "../core/useAnimationFrame";
 import { coverProjector, syncCanvas } from "../core/overlay";
-import { getVisionFileset, MODELS } from "../core/vision";
+import { COCO_CLASSES, detectObjects, loadYolo, type Detection } from "../core/yolo";
 import "./demos.css";
 
 type LoadState = "loading" | "ready" | "error";
 
 const PALETTE = ["#5b8cff", "#38e8c8", "#ffb35b", "#b86bff", "#ff6b6b", "#7CFC9A"];
+const MODEL_URL = `${import.meta.env.BASE_URL}models/yolov8n.onnx`;
 
 export default function ObjectOverlay({ video, width, height, mirrored }: DemoProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const detectorRef = useRef<ObjectDetector | null>(null);
-  const resultRef = useRef<ObjectDetectorResult | null>(null);
-  const lastVideoTime = useRef(-1);
+  const sessionRef = useRef<InferenceSession | null>(null);
+  const detectionsRef = useRef<Detection[]>([]);
   const [state, setState] = useState<LoadState>("loading");
   const [count, setCount] = useState(0);
 
+  // Load the YOLOv8 session once.
   useEffect(() => {
     let cancelled = false;
-    let detector: ObjectDetector | null = null;
-    (async () => {
-      try {
-        const { ObjectDetector } = await import("@mediapipe/tasks-vision");
-        const fileset = await getVisionFileset();
-        const create = (delegate: "GPU" | "CPU") =>
-          ObjectDetector.createFromOptions(fileset, {
-            baseOptions: { modelAssetPath: MODELS.objectDetector, delegate },
-            runningMode: "VIDEO",
-            scoreThreshold: 0.45,
-            maxResults: 8,
-          });
-        // The int8 model can fail on some GPU delegates; fall back to CPU.
-        detector = await create("GPU").catch(() => create("CPU"));
-        if (cancelled) {
-          detector.close();
-          return;
-        }
-        detectorRef.current = detector;
+    loadYolo(MODEL_URL)
+      .then((session) => {
+        if (cancelled) return;
+        sessionRef.current = session;
         setState("ready");
-      } catch (err) {
-        console.error("ObjectDetector failed to load", err);
+      })
+      .catch((err) => {
+        console.error("YOLOv8 failed to load", err);
         if (!cancelled) setState("error");
-      }
-    })();
+      });
     return () => {
       cancelled = true;
-      detectorRef.current?.close();
-      detectorRef.current = null;
-      detector?.close();
     };
   }, []);
 
+  // Inference loop, decoupled from rendering so a slow frame never blocks the
+  // draw loop. Schedules the next run as soon as the previous one resolves.
+  useEffect(() => {
+    if (state !== "ready") return;
+    let cancelled = false;
+
+    const tick = async () => {
+      const session = sessionRef.current;
+      if (cancelled || !session) return;
+      if (video.readyState >= 2) {
+        try {
+          detectionsRef.current = await detectObjects(session, video);
+          if (!cancelled) setCount(detectionsRef.current.length);
+        } catch (err) {
+          console.error("YOLOv8 inference error", err);
+        }
+      }
+      if (!cancelled) requestAnimationFrame(tick);
+    };
+    void tick();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [state, video]);
+
+  // Render the latest detections every frame (smooth, persists between runs).
   useAnimationFrame(() => {
     const canvas = canvasRef.current;
-    const detector = detectorRef.current;
-    if (!canvas || !detector) return;
-
-    if (video.currentTime !== lastVideoTime.current && video.readyState >= 2) {
-      lastVideoTime.current = video.currentTime;
-      try {
-        resultRef.current = detector.detectForVideo(video, performance.now());
-        setCount(resultRef.current.detections.length);
-      } catch {
-        /* transient frame errors are safe to skip */
-      }
-    }
-
+    if (!canvas) return;
     const frame = syncCanvas(canvas);
     if (!frame) return;
     const project = coverProjector(frame.width, frame.height, width, height, mirrored);
-    drawDetections(frame.ctx, resultRef.current, width, height, project);
+    drawDetections(frame.ctx, detectionsRef.current, project);
   }, state === "ready");
 
   return (
@@ -83,8 +81,8 @@ export default function ObjectOverlay({ video, width, height, mirrored }: DemoPr
             "demo-status__dot" + (state !== "ready" ? " demo-status__dot--warn" : "")
           }
         />
-        {state === "loading" && "Loading detector…"}
-        {state === "error" && "Detector failed to load"}
+        {state === "loading" && "Loading YOLOv8…"}
+        {state === "error" && "Model failed to load"}
         {state === "ready" &&
           (count > 0 ? `${count} object${count > 1 ? "s" : ""} detected` : "Scanning…")}
       </div>
@@ -94,30 +92,20 @@ export default function ObjectOverlay({ video, width, height, mirrored }: DemoPr
 
 function drawDetections(
   ctx: CanvasRenderingContext2D,
-  result: ObjectDetectorResult | null,
-  videoW: number,
-  videoH: number,
+  detections: Detection[],
   project: (nx: number, ny: number) => [number, number],
 ) {
-  if (!result) return;
-  ctx.font = "700 14px var(--font, system-ui)";
+  ctx.font = "700 14px system-ui, sans-serif";
   ctx.textBaseline = "middle";
 
-  result.detections.forEach((det, i) => {
-    const box = det.boundingBox;
-    if (!box) return;
-    const color = PALETTE[i % PALETTE.length];
-
-    // Box corners → normalized → cover-projected screen px.
-    const [x1, y1] = project(box.originX / videoW, box.originY / videoH);
-    const [x2, y2] = project(
-      (box.originX + box.width) / videoW,
-      (box.originY + box.height) / videoH,
-    );
-    const left = Math.min(x1, x2);
-    const top = Math.min(y1, y2);
-    const w = Math.abs(x2 - x1);
-    const h = Math.abs(y2 - y1);
+  detections.forEach((det, i) => {
+    const color = PALETTE[det.classId % PALETTE.length] ?? PALETTE[i % PALETTE.length];
+    const [px1, py1] = project(det.x1, det.y1);
+    const [px2, py2] = project(det.x2, det.y2);
+    const left = Math.min(px1, px2);
+    const top = Math.min(py1, py2);
+    const w = Math.abs(px2 - px1);
+    const h = Math.abs(py2 - py1);
 
     // Animated corner brackets.
     const corner = Math.min(26, w * 0.3, h * 0.3);
@@ -126,19 +114,15 @@ function drawDetections(
     ctx.shadowColor = color;
     ctx.shadowBlur = 12;
     ctx.beginPath();
-    // TL
     ctx.moveTo(left, top + corner);
     ctx.lineTo(left, top);
     ctx.lineTo(left + corner, top);
-    // TR
     ctx.moveTo(left + w - corner, top);
     ctx.lineTo(left + w, top);
     ctx.lineTo(left + w, top + corner);
-    // BR
     ctx.moveTo(left + w, top + h - corner);
     ctx.lineTo(left + w, top + h);
     ctx.lineTo(left + w - corner, top + h);
-    // BL
     ctx.moveTo(left + corner, top + h);
     ctx.lineTo(left, top + h);
     ctx.lineTo(left, top + h - corner);
@@ -146,8 +130,7 @@ function drawDetections(
     ctx.shadowBlur = 0;
 
     // Label chip.
-    const cat = det.categories[0];
-    const label = `${cat?.categoryName ?? "object"}  ${Math.round((cat?.score ?? 0) * 100)}%`;
+    const label = `${COCO_CLASSES[det.classId] ?? "object"}  ${Math.round(det.score * 100)}%`;
     const padX = 8;
     const tw = ctx.measureText(label).width + padX * 2;
     const chipH = 22;
