@@ -25,12 +25,15 @@ export default function ObjectOverlay({ video, width, height, mirrored }: DemoPr
       try {
         const { ObjectDetector } = await import("@mediapipe/tasks-vision");
         const fileset = await getVisionFileset();
-        detector = await ObjectDetector.createFromOptions(fileset, {
-          baseOptions: { modelAssetPath: MODELS.objectDetector, delegate: "GPU" },
-          runningMode: "VIDEO",
-          scoreThreshold: 0.45,
-          maxResults: 8,
-        });
+        const create = (delegate: "GPU" | "CPU") =>
+          ObjectDetector.createFromOptions(fileset, {
+            baseOptions: { modelAssetPath: MODELS.objectDetector, delegate },
+            runningMode: "VIDEO",
+            scoreThreshold: 0.45,
+            maxResults: 8,
+          });
+        // The int8 model can fail on some GPU delegates; fall back to CPU.
+        detector = await create("GPU").catch(() => create("CPU"));
         if (cancelled) {
           detector.close();
           return;
