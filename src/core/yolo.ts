@@ -13,6 +13,15 @@ const INPUT = 640; // YOLOv8 square input
 const CONF_THRESHOLD = 0.3;
 const IOU_THRESHOLD = 0.45;
 
+// Reused across inference calls (planar RGB, CHW). detectObjects awaits each
+// run fully before the next, so a single shared buffer is safe.
+const inputBuffer = new Float32Array(3 * INPUT * INPUT);
+
+/** Releases a tensor's backing memory if the runtime supports it. */
+function disposeTensor(t: ort.Tensor | undefined) {
+  (t as { dispose?: () => void } | undefined)?.dispose?.();
+}
+
 /** COCO-80 class names, in model output order. */
 export const COCO_CLASSES = [
   "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck",
@@ -87,9 +96,10 @@ export async function detectObjects(
   ctx.drawImage(video, padX, padY, nw, nh);
   const { data } = ctx.getImageData(0, 0, INPUT, INPUT);
 
-  // RGBA8 -> planar RGB float32 (CHW), normalized 0..1.
+  // RGBA8 -> planar RGB float32 (CHW), normalized 0..1. Reuse one buffer
+  // across calls to avoid allocating ~5 MB of garbage every frame.
   const area = INPUT * INPUT;
-  const input = new Float32Array(3 * area);
+  const input = inputBuffer;
   for (let i = 0; i < area; i++) {
     input[i] = data[i * 4] / 255;
     input[area + i] = data[i * 4 + 1] / 255;
@@ -136,6 +146,11 @@ export async function detectObjects(
     const y2 = (cy + h / 2 - padY) / scale / vh;
     raw.push({ x1, y1, x2, y2, score: bestScore, classId: bestClass });
   }
+
+  // Free the per-run tensors (WASM heap / GPU buffers) — without this the
+  // tab's memory climbs every frame and eventually crashes.
+  disposeTensor(tensor);
+  for (const name of session.outputNames) disposeTensor(results[name]);
 
   return nms(raw, IOU_THRESHOLD);
 }

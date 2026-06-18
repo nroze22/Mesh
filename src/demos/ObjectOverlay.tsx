@@ -62,31 +62,40 @@ export default function ObjectOverlay({ video, width, height, mirrored }: DemoPr
     };
   }, []);
 
-  // Inference loop, decoupled from rendering. Feeds detections into the tracker.
+  // Inference loop, decoupled from rendering and throttled to ~15 fps. The
+  // tracker interpolates between runs, so a lower inference rate stays smooth
+  // while capping GPU/memory churn (which otherwise crashes the tab).
   useEffect(() => {
     if (state !== "ready") return;
     let cancelled = false;
+    let timer = 0;
+    const INTERVAL = 66; // ms between inferences (~15 fps)
 
     const tick = async () => {
       const session = sessionRef.current;
       if (cancelled || !session) return;
+      const start = performance.now();
       if (video.readyState >= 2) {
         try {
           const dets = await detectObjects(session, video);
           if (!cancelled) {
             updateTracks(tracksRef.current, dets, performance.now(), nextId);
-            setCount(dets.length);
+            setCount((c) => (c === dets.length ? c : dets.length));
           }
         } catch (err) {
           console.error("YOLOv8 inference error", err);
         }
       }
-      if (!cancelled) requestAnimationFrame(tick);
+      if (!cancelled) {
+        const wait = Math.max(0, INTERVAL - (performance.now() - start));
+        timer = window.setTimeout(tick, wait);
+      }
     };
     void tick();
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [state, video]);
 
