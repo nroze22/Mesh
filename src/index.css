@@ -33,10 +33,7 @@ body {
   margin: 0;
   font-family: var(--font);
   color: var(--text);
-  background:
-    radial-gradient(1200px 800px at 15% -10%, rgba(91, 140, 255, 0.18), transparent 60%),
-    radial-gradient(1000px 700px at 110% 10%, rgba(184, 107, 255, 0.16), transparent 55%),
-    var(--bg);
+  background: var(--bg);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
