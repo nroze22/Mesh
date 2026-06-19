@@ -6,6 +6,12 @@
   pointer-events: none;
 }
 
+/* Generative pieces that own the whole frame sit on a solid backdrop so the
+   live video doesn't show through before the first frame is painted. */
+.demo-canvas--opaque {
+  background: #05060c;
+}
+
 /* Bottom status readout shared by the vision demos. */
 .demo-status {
   position: absolute;

@@ -17,8 +17,11 @@ export interface CanvasFrame {
  * Resizes a canvas's backing store to match its CSS box at the current device
  * pixel ratio and returns a 2D context pre-scaled so you can draw in CSS px.
  * Returns null if the canvas has no layout box yet or lacks a 2D context.
+ *
+ * Pass `clear = false` to keep the previous frame (for trail / feedback
+ * effects that fade rather than wipe).
  */
-export function syncCanvas(canvas: HTMLCanvasElement): CanvasFrame | null {
+export function syncCanvas(canvas: HTMLCanvasElement, clear = true): CanvasFrame | null {
   const rect = canvas.getBoundingClientRect();
   if (rect.width === 0 || rect.height === 0) return null;
 
@@ -33,7 +36,7 @@ export function syncCanvas(canvas: HTMLCanvasElement): CanvasFrame | null {
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, rect.width, rect.height);
+  if (clear) ctx.clearRect(0, 0, rect.width, rect.height);
   return { ctx, width: rect.width, height: rect.height, dpr };
 }
 
