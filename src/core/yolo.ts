@@ -14,13 +14,13 @@ const CONF_THRESHOLD = 0.3;
 const IOU_THRESHOLD = 0.45;
 
 // Reused across inference calls (planar RGB, CHW). detectObjects awaits each
-// run fully before the next, so a single shared buffer is safe.
+// run fully before the next, so sharing buffers/tensors is safe — and crucial:
+// allocating a fresh ~2.8 MB output every run is what crashed the tab.
 const inputBuffer = new Float32Array(3 * INPUT * INPUT);
-
-/** Releases a tensor's backing memory if the runtime supports it. */
-function disposeTensor(t: ort.Tensor | undefined) {
-  (t as { dispose?: () => void } | undefined)?.dispose?.();
-}
+const inputTensor = new ort.Tensor("float32", inputBuffer, [1, 3, INPUT, INPUT]);
+// Preallocated output, created after the first run once we know its shape, then
+// passed back to session.run as an IO-binding fetch so ORT reuses it.
+let outputTensor: ort.Tensor | null = null;
 
 /** COCO-80 class names, in model output order. */
 export const COCO_CLASSES = [
@@ -106,12 +106,23 @@ export async function detectObjects(
     input[2 * area + i] = data[i * 4 + 2] / 255;
   }
 
-  const tensor = new ort.Tensor("float32", input, [1, 3, INPUT, INPUT]);
-  const feeds: Record<string, ort.Tensor> = {
-    [session.inputNames[0]]: tensor,
-  };
-  const results = await session.run(feeds);
-  const output = results[session.outputNames[0]];
+  const inName = session.inputNames[0];
+  const outName = session.outputNames[0];
+  const feeds = { [inName]: inputTensor };
+
+  // Reuse one output buffer via IO binding once we know its shape. This keeps
+  // memory flat across thousands of runs instead of leaking ~2.8 MB each time.
+  const results = outputTensor
+    ? await session.run(feeds, { [outName]: outputTensor })
+    : await session.run(feeds);
+  const output = results[outName];
+  if (!outputTensor) {
+    outputTensor = new ort.Tensor(
+      "float32",
+      new Float32Array((output.data as Float32Array).length),
+      output.dims as number[],
+    );
+  }
   const dims = output.dims; // [1, 84, 8400] (channel-major) or [1, 8400, 84]
   const arr = output.data as Float32Array;
 
@@ -146,11 +157,6 @@ export async function detectObjects(
     const y2 = (cy + h / 2 - padY) / scale / vh;
     raw.push({ x1, y1, x2, y2, score: bestScore, classId: bestClass });
   }
-
-  // Free the per-run tensors (WASM heap / GPU buffers) — without this the
-  // tab's memory climbs every frame and eventually crashes.
-  disposeTensor(tensor);
-  for (const name of session.outputNames) disposeTensor(results[name]);
 
   return nms(raw, IOU_THRESHOLD);
 }

@@ -69,7 +69,7 @@ export default function ObjectOverlay({ video, width, height, mirrored }: DemoPr
     if (state !== "ready") return;
     let cancelled = false;
     let timer = 0;
-    const INTERVAL = 66; // ms between inferences (~15 fps)
+    const INTERVAL = 90; // ms between inferences (~11 fps)
 
     const tick = async () => {
       const session = sessionRef.current;
