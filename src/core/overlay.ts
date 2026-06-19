@@ -63,3 +63,27 @@ export function coverProjector(
     return [mirrored ? displayW - x : x, y];
   };
 }
+
+export interface CoverRect {
+  dx: number;
+  dy: number;
+  dw: number;
+  dh: number;
+}
+
+/**
+ * Computes the destination rect for drawing a source-frame image (e.g. a
+ * segmentation mask) onto a cover-fitted display box. For mirrored feeds, flip
+ * the context horizontally (translate(displayW,0); scale(-1,1)) before drawing.
+ */
+export function coverRect(
+  displayW: number,
+  displayH: number,
+  videoW: number,
+  videoH: number,
+): CoverRect {
+  const scale = Math.max(displayW / videoW, displayH / videoH);
+  const dw = videoW * scale;
+  const dh = videoH * scale;
+  return { dx: (displayW - dw) / 2, dy: (displayH - dh) / 2, dw, dh };
+}

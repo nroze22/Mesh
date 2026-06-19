@@ -45,6 +45,32 @@
   box-shadow: 0 0 10px #ffb35b;
 }
 
+/* Floating action pill (e.g. Clear / mode toggle) below the top bar. */
+.demo-fab {
+  position: absolute;
+  z-index: 15;
+  top: calc(env(safe-area-inset-top, 0px) + 4.4rem);
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.demo-fab:active {
+  transform: translateX(-50%) scale(0.96);
+}
+
 /* Centered prompt panel for in-demo permission / loading states. */
 .demo-prompt {
   position: absolute;
