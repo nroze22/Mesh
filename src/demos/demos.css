@@ -71,6 +71,23 @@
   transform: translateX(-50%) scale(0.96);
 }
 
+/* Game score readout (top-left, below the bar). */
+.game-score {
+  position: absolute;
+  z-index: 15;
+  top: calc(env(safe-area-inset-top, 0px) + 4.4rem);
+  left: 1rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+}
+
 /* Centered prompt panel for in-demo permission / loading states. */
 .demo-prompt {
   position: absolute;
